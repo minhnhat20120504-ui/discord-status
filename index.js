@@ -47,7 +47,7 @@ app.get("/", (req, res) => {
   res.send("Bot is running");
 });
 
-client.login(process.env.BOT_TOKEN || "");
+client.login(process.env.BOT_TOKEN);
 app.listen(3000);
 
 // LẤY TỪ ENV (KHÔNG VIẾT TRỰC TIẾP)
@@ -79,5 +79,6 @@ app.get("/discord-status", async (req, res) => {
 });
 
 app.listen(3000, () => console.log("Server running"));
+
 
 
