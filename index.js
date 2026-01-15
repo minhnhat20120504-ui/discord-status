@@ -5,7 +5,7 @@ const client = new Client({
 });
 
 const activities = [
-  { name: "pmnx.pages.dev", type: ActivityType.Playing },
+  { name: "pmnx.pages.dev", type: ActivityType.Streamming },
   { name: "phamminhnhat__", type: ActivityType.Watching },
   { name: "[ HEAVEN IS HERE ]", type: ActivityType.Listening },
   { name: "Discord.com", type: ActivityType.Playing }
@@ -34,6 +34,7 @@ client.once("ready", () => {
 });
 
 client.login(process.env.BOT_TOKEN);
+
 
 
 
