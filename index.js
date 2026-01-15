@@ -11,7 +11,7 @@ const client = new Client({
   ]
 });
 import express from "express";
-import { Client, GatewayIntentBits } from "discord.js";
+import { Client, GatewayIntentBits } from "package.js";
 
 const app = express();
 
@@ -79,4 +79,5 @@ app.get("/discord-status", async (req, res) => {
 });
 
 app.listen(3000, () => console.log("Server running"));
+
 
