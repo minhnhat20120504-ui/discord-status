@@ -1,4 +1,8 @@
+import express from "express";
 import { Client, GatewayIntentBits, ActivityType } from "discord.js";
+
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -16,13 +20,11 @@ let index = 0;
 client.once("ready", () => {
   console.log("Bot online:", client.user.tag);
 
-  // set ngay lần đầu
   client.user.setPresence({
     status: "online",
     activities: [activities[0]]
   });
 
-  // đổi activity mỗi 3 giây
   setInterval(() => {
     index = (index + 1) % activities.length;
 
@@ -35,7 +37,11 @@ client.once("ready", () => {
 
 client.login(process.env.BOT_TOKEN);
 
+/* ===== BẮT BUỘC CHO RENDER ===== */
+app.get("/", (req, res) => {
+  res.send("Bot is running");
+});
 
-
-
-
+app.listen(PORT, () => {
+  console.log("Listening on port", PORT);
+});
