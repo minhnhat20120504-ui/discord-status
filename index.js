@@ -27,6 +27,26 @@ client.once("ready", () => {
 
   setInterval(() => {
     index = (index + 1) % activities.length;
+    client.user.setPresence({
+      status: "online",
+      activities: [activities[index]]
+    });
+  }, 3000);
+});
+
+client.login(process.env.BOT_TOKEN);
+
+/* ==== WEB PART (BẮT BUỘC) ==== */
+app.get("/", (req, res) => {
+  res.send("Bot is running");
+});
+
+app.listen(PORT, () => {
+  console.log("Listening on port", PORT);
+});
+
+  setInterval(() => {
+    index = (index + 1) % activities.length;
 
     client.user.setPresence({
       status: "online", // online | idle | dnd
@@ -45,3 +65,4 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log("Listening on port", PORT);
 });
+
