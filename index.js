@@ -22,7 +22,7 @@ client.once("ready", () => {
     activities: [activities[0]]
   });
 
-  // đổi activity mỗi 10 giây
+  // đổi activity mỗi 20 giây
   setInterval(() => {
     index = (index + 1) % activities.length;
 
@@ -30,8 +30,9 @@ client.once("ready", () => {
       status: "online", // online | idle | dnd
       activities: [activities[index]]
     });
-  }, 10000);
+  }, 20000);
 });
 
 client.login(process.env.BOT_TOKEN);
+
 
