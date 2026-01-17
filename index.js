@@ -31,7 +31,7 @@ client.once("ready", () => {
       status: "online",
       activities: [activities[index]]
     });
-  }, 5000);
+  }, 10000);
 });
 
 // route giữ Render không tắt
@@ -44,3 +44,4 @@ app.listen(PORT, () => {
 });
 
 client.login(process.env.BOT_TOKEN);
+
