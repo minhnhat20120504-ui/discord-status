@@ -49,10 +49,10 @@ app.listen(PORT, () => {
     index = (index + 1) % activities.length;
 
     client.user.setPresence({
-      status: "online", // online | idle | dnd
+      status: "idle", // online | idle | dnd
       activities: [activities[index]]
     });
-  }, 3000);
+  }, 10000);
 });
 
 client.login(process.env.BOT_TOKEN);
@@ -65,4 +65,5 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log("Listening on port", PORT);
 });
+
 
