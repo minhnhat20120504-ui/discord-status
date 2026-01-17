@@ -40,7 +40,7 @@ client.once("ready", () => {
       status: "online",
       activities: [activities[i]]
     });
-  }, 5000);
+  }, 10000);
 });
 
 client.login(process.env.BOT_TOKEN);
@@ -48,3 +48,4 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
+
