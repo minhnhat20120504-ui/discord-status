@@ -1,5 +1,5 @@
-import { Client, GatewayIntentBits, ActivityType } from "discord.js";
 import express from "express";
+import { Client, GatewayIntentBits, ActivityType } from "discord.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -9,7 +9,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static("public"));
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -22,7 +24,7 @@ const activities = [
   { name: "Discord.com", type: ActivityType.Playing }
 ];
 
-let index = 0;
+let i = 0;
 
 client.once("ready", () => {
   console.log("Bot online:", client.user.tag);
@@ -33,20 +35,16 @@ client.once("ready", () => {
   });
 
   setInterval(() => {
-    index = (index + 1) % activities.length;
+    i = (i + 1) % activities.length;
     client.user.setPresence({
       status: "online",
-      activities: [activities[index]]
+      activities: [activities[i]]
     });
-  }, 10000);
-});
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/index.html"));
-});
-
-app.listen(PORT, () => {
-  console.log("Web server running on port", PORT);
+  }, 5000);
 });
 
 client.login(process.env.BOT_TOKEN);
+
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
+});
