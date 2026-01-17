@@ -31,7 +31,7 @@ client.once("ready", () => {
       status: "online",
       activities: [activities[index]]
     });
-  }, 3000);
+  }, 10000);
 });
 
 client.login(process.env.BOT_TOKEN);
@@ -65,5 +65,6 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log("Listening on port", PORT);
 });
+
 
 
