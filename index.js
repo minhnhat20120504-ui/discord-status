@@ -1,5 +1,5 @@
-import express from "express";
 import { Client, GatewayIntentBits, ActivityType } from "discord.js";
+import express from "express";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,40 +31,16 @@ client.once("ready", () => {
       status: "online",
       activities: [activities[index]]
     });
-  }, 10000);
+  }, 5000);
 });
 
-client.login(process.env.BOT_TOKEN);
-
-/* ==== WEB PART (BẮT BUỘC) ==== */
+// route giữ Render không tắt
 app.get("/", (req, res) => {
   res.send("Bot is running");
 });
 
 app.listen(PORT, () => {
-  console.log("Listening on port", PORT);
-});
-
-  setInterval(() => {
-    index = (index + 1) % activities.length;
-
-    client.user.setPresence({
-      status: "idle", // online | idle | dnd
-      activities: [activities[index]]
-    });
-  }, 10000);
+  console.log("Web server running on port", PORT);
 });
 
 client.login(process.env.BOT_TOKEN);
-
-/* ===== BẮT BUỘC CHO RENDER ===== */
-app.get("/", (req, res) => {
-  res.send("Bot is running");
-});
-
-app.listen(PORT, () => {
-  console.log("Listening on port", PORT);
-});
-
-
-
