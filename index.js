@@ -1,8 +1,15 @@
 import { Client, GatewayIntentBits, ActivityType } from "discord.js";
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(express.static("public"));
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -34,9 +41,8 @@ client.once("ready", () => {
   }, 10000);
 });
 
-// route giữ Render không tắt
 app.get("/", (req, res) => {
-  res.send("Bot is running");
+  res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
 app.listen(PORT, () => {
@@ -44,4 +50,3 @@ app.listen(PORT, () => {
 });
 
 client.login(process.env.BOT_TOKEN);
-
