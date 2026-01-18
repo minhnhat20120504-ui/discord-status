@@ -13,7 +13,6 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ===== DISCORD BOT =====
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
@@ -26,39 +25,40 @@ const activities = [
 ];
 
 const thoughts = [
-  "pmnx.pages.dev",
+ "pmnx.pages.dev",
   "Join Our Server!",
   "dc:phamminhnhat__",
-  
 ];
 
 let activityIndex = 0;
+let currentThought = thoughts[0];
+
+function updatePresence() {
+  client.user.setPresence({
+    status: "online",
+    activities: [
+      activities[activityIndex],
+      { name: currentThought, type: ActivityType.Custom }
+    ]
+  });
+}
 
 client.once("ready", () => {
   console.log("Bot online:", client.user.tag);
 
-  // ⏱ Đổi ACTIVITY mỗi 1s
+  // Activity mỗi 4s
   setInterval(() => {
     activityIndex = (activityIndex + 1) % activities.length;
+    updatePresence();
+  }, 4000);
 
-    client.user.setPresence({
-      status: "online",
-      activities: [activities[activityIndex]]
-    });
-  }, 1000);
-
-  // 💭 Đổi THOUGHT mỗi 4s
+  // Thought mỗi 4s
   setInterval(() => {
-    const thought = thoughts[Math.floor(Math.random() * thoughts.length)];
+    currentThought = thoughts[Math.floor(Math.random() * thoughts.length)];
+    updatePresence();
+  }, 4000);
 
-    client.user.setPresence({
-      status: "online",
-      activities: [
-        activities[activityIndex],
-        { name: thought, type: ActivityType.Custom }
-      ]
-    });
-  }, 7000);
+  updatePresence();
 });
 
 client.login(process.env.BOT_TOKEN);
