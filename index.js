@@ -24,17 +24,25 @@ const activities = [
   { name: "Pham Minh Nhat", type: ActivityType.Playing }
 ];
 
+let activityIndex = 0;
+
+function updatePresence() {
+  client.user.setPresence({
+    status: "online",
+    activities: [activities[activityIndex]]
+  });
+}
 
 client.once("ready", () => {
   console.log("Bot online:", client.user.tag);
+  updatePresence();
 
-  // Activity mỗi 4s
   setInterval(() => {
     activityIndex = (activityIndex + 1) % activities.length;
     updatePresence();
   }, 4000);
+});
 
- 
 client.login(process.env.BOT_TOKEN);
 
 app.listen(PORT, () => {
