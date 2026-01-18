@@ -13,6 +13,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// ===== DISCORD BOT =====
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
@@ -24,23 +25,40 @@ const activities = [
   { name: "Pham Minh Nhat", type: ActivityType.Playing }
 ];
 
-let i = 0;
+const thoughts = [
+  "pmnx.pages.dev",
+  "Join Our Server!",
+  "dc:phamminhnhat__",
+  
+];
+
+let activityIndex = 0;
 
 client.once("ready", () => {
   console.log("Bot online:", client.user.tag);
 
-  client.user.setPresence({
-    status: "idle",
-    activities: [activities[0]]
-  });
-
+  // ⏱ Đổi ACTIVITY mỗi 1s
   setInterval(() => {
-    i = (i + 1) % activities.length;
+    activityIndex = (activityIndex + 1) % activities.length;
+
     client.user.setPresence({
-      status: "idle",
-      activities: [activities[i]]
+      status: "online",
+      activities: [activities[activityIndex]]
     });
-  }, 3000);
+  }, 1000);
+
+  // 💭 Đổi THOUGHT mỗi 4s
+  setInterval(() => {
+    const thought = thoughts[Math.floor(Math.random() * thoughts.length)];
+
+    client.user.setPresence({
+      status: "online",
+      activities: [
+        activities[activityIndex],
+        { name: thought, type: ActivityType.Custom }
+      ]
+    });
+  }, 7000);
 });
 
 client.login(process.env.BOT_TOKEN);
@@ -48,5 +66,3 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
-
-
