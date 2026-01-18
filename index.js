@@ -21,7 +21,7 @@ const activities = [
   { name: "pmnx.pages.dev", type: ActivityType.Playing },
   { name: "phamminhnhat__", type: ActivityType.Watching },
   { name: "[ HEAVEN IS HERE ]", type: ActivityType.Listening },
-  { name: "Discord.com", type: ActivityType.Playing }
+  { name: "Pham Minh Nhat", type: ActivityType.Playing }
 ];
 
 let i = 0;
@@ -30,17 +30,17 @@ client.once("ready", () => {
   console.log("Bot online:", client.user.tag);
 
   client.user.setPresence({
-    status: "online",
+    status: "idle",
     activities: [activities[0]]
   });
 
   setInterval(() => {
     i = (i + 1) % activities.length;
     client.user.setPresence({
-      status: "online",
+      status: "idle",
       activities: [activities[i]]
     });
-  }, 10000);
+  }, 3000);
 });
 
 client.login(process.env.BOT_TOKEN);
@@ -48,4 +48,5 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
+
 
