@@ -24,24 +24,6 @@ const activities = [
   { name: "Pham Minh Nhat", type: ActivityType.Playing }
 ];
 
-const thoughts = [
- "pmnx.pages.dev",
-  "Join Our Server!",
-  "dc:phamminhnhat__",
-];
-
-let activityIndex = 0;
-let currentThought = thoughts[0];
-
-function updatePresence() {
-  client.user.setPresence({
-    status: "online",
-    activities: [
-      activities[activityIndex],
-      { name: currentThought, type: ActivityType.Custom }
-    ]
-  });
-}
 
 client.once("ready", () => {
   console.log("Bot online:", client.user.tag);
@@ -52,15 +34,7 @@ client.once("ready", () => {
     updatePresence();
   }, 4000);
 
-  // Thought mỗi 4s
-  setInterval(() => {
-    currentThought = thoughts[Math.floor(Math.random() * thoughts.length)];
-    updatePresence();
-  }, 4000);
-
-  updatePresence();
-});
-
+ 
 client.login(process.env.BOT_TOKEN);
 
 app.listen(PORT, () => {
