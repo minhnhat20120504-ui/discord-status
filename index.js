@@ -8,49 +8,43 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.use(express.json());
-app.use(express.static(__dirname));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
-let current = {
-  text: "pmnx.pages.dev",
-  emoji: "🔥",
-  type: ActivityType.Playing
-};
+const activities = [
+  { name: "pmnx.pages.dev", type: ActivityType.Playing },
+  { name: "phamminhnhat__", type: ActivityType.Watching },
+  { name: "[ HEAVEN IS HERE ]", type: ActivityType.Listening },
+  { name: "Pham Minh Nhat", type: ActivityType.Playing }
+];
 
-function updatePresence(){
+let activityIndex = 0;
+
+function updatePresence() {
   client.user.setPresence({
     status: "online",
-    activities: [{
-      name: `${current.emoji} ${current.text}`,
-      type: current.type
-    }]
+    activities: [activities[activityIndex]]
   });
 }
 
-app.post("/set-status", (req,res)=>{
-  const { text, emoji, type } = req.body;
-  current.text = text || current.text;
-  current.emoji = emoji || current.emoji;
-  current.type = ActivityType[type] ?? ActivityType.Playing;
+client.once("ready", () => {
+  console.log("Bot online:", client.user.tag);
   updatePresence();
-  res.sendStatus(200);
-});
 
-app.get("/", (req,res)=>{
-  res.sendFile(path.join(__dirname,"index.html"));
-});
-
-client.once("ready", ()=>{
-  console.log("🤖 Bot online:", client.user.tag);
-  updatePresence();
+  setInterval(() => {
+    activityIndex = (activityIndex + 1) % activities.length;
+    updatePresence();
+  }, 4000);
 });
 
 client.login(process.env.BOT_TOKEN);
 
-app.listen(PORT, ()=>{
-  console.log("🌐 Dashboard running on port", PORT);
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
