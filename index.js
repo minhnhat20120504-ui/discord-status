@@ -59,7 +59,7 @@ const commands = [
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
 
-  // /mute (timeout)
+  // /mute
   new SlashCommandBuilder()
     .setName("mute")
     .setDescription("🔇 Mute (timeout) thành viên")
@@ -95,7 +95,17 @@ const commands = [
         .setDescription("Số tin nhắn cần xoá (1-100)")
         .setRequired(true)
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages)
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+
+  // /userinfo ✅
+  new SlashCommandBuilder()
+    .setName("userinfo")
+    .setDescription("👤 Xem thông tin người dùng")
+    .addUserOption(o =>
+      o.setName("user")
+        .setDescription("Người cần xem (để trống = bạn)")
+        .setRequired(false)
+    )
 ].map(cmd => cmd.toJSON());
 
 // ================== REGISTER COMMANDS ==================
@@ -134,6 +144,7 @@ client.on("interactionCreate", async interaction => {
 **/help** → Hiển thị bảng trợ giúp  
 **/ping** → Kiểm tra độ trễ bot  
 **/say** → Bot nói thay bạn  
+**/userinfo** → Xem thông tin người dùng  
 **/kick** → Kick thành viên  
 **/mute** → Mute (timeout) thành viên  
 **/ban** → Ban thành viên  
@@ -203,6 +214,35 @@ https://pmnx.pages.dev
 
     await interaction.channel.bulkDelete(amount, true);
     return interaction.reply({ content: `🧹 Đã xoá ${amount} tin nhắn`, ephemeral: true });
+  }
+
+  // ===== /userinfo ✅ =====
+  if (commandName === "userinfo") {
+    const user = interaction.options.getUser("user") || interaction.user;
+    const member = await interaction.guild.members.fetch(user.id);
+
+    const roles = member.roles.cache
+      .filter(r => r.id !== interaction.guild.id)
+      .map(r => r.toString())
+      .join(", ") || "Không có";
+
+    const embed = new EmbedBuilder()
+      .setColor("#00FFFF")
+      .setTitle("👤 User Info")
+      .setThumbnail(user.displayAvatarURL({ size: 512 }))
+      .addFields(
+        { name: "👤 Tên", value: `${user.tag}`, inline: true },
+        { name: "🆔 ID", value: user.id, inline: true },
+        { name: "🤖 Bot?", value: user.bot ? "Có" : "Không", inline: true },
+        { name: "📅 Tạo tài khoản", value: `<t:${Math.floor(user.createdTimestamp / 1000)}:F>` },
+        { name: "📥 Vào server", value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:F>` },
+        { name: "🎭 Role cao nhất", value: member.roles.highest.toString(), inline: true },
+        { name: "📜 Roles", value: roles }
+      )
+      .setFooter({ text: "Pham Minh Nhat Bot" })
+      .setTimestamp();
+
+    return interaction.reply({ embeds: [embed] });
   }
 });
 
