@@ -18,10 +18,10 @@ const client = new Client({
 });
 
 const activities = [
-  { name: "pmnx.pages.dev", type: ActivityType.Playing },
+  { name: "🎮| pmnx.pages.dev", type: ActivityType.Playing },
   { name: "phamminhnhat__", type: ActivityType.Watching },
-  { name: "[ HEAVEN IS HERE ]", type: ActivityType.Listening },
-  { name: "Pham Minh Nhat", type: ActivityType.Playing }
+  { name: "[trym](https://cdn.discordapp.com/emojis/1440662374343245936.webp?size=96&name=trym)「🎵」[ HEAVEN IS HERE ]", type: ActivityType.Listening },
+  { name: "🎮|Pham Minh Nhat", type: ActivityType.Playing }
 ];
 
 let activityIndex = 0;
@@ -48,3 +48,4 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
+
