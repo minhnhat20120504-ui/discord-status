@@ -5,7 +5,7 @@ import {
   REST,
   Routes,
   SlashCommandBuilder,
-  PermissionFlagsBits
+  EmbedBuilder
 } from "discord.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -17,132 +17,73 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get("/", (req, res) => {
-  res.send("Bot is running");
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// ===== DISCORD BOT =====
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
+  intents: [GatewayIntentBits.Guilds]
 });
 
-/* ====== SLASH COMMANDS ====== */
+// ===== SLASH COMMANDS =====
 const commands = [
   new SlashCommandBuilder()
-    .setName("ping")
-    .setDescription("Check bot ping"),
+    .setName("help")
+    .setDescription("📜 Xem danh sách lệnh của bot")
+].map(cmd => cmd.toJSON());
 
-  new SlashCommandBuilder()
-    .setName("say")
-    .setDescription("Bot nói thay bạn")
-    .addStringOption(opt =>
-      opt.setName("text").setDescription("Nội dung").setRequired(true)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-
-  new SlashCommandBuilder()
-    .setName("kick")
-    .setDescription("Kick thành viên")
-    .addUserOption(opt =>
-      opt.setName("user").setDescription("Người cần kick").setRequired(true)
-    )
-    .addStringOption(opt =>
-      opt.setName("reason").setDescription("Lý do")
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
-
-  new SlashCommandBuilder()
-    .setName("mute")
-    .setDescription("Mute (timeout) thành viên")
-    .addUserOption(opt =>
-      opt.setName("user").setDescription("Người cần mute").setRequired(true)
-    )
-    .addIntegerOption(opt =>
-      opt.setName("minutes").setDescription("Số phút").setRequired(true)
-    )
-    .addStringOption(opt =>
-      opt.setName("reason").setDescription("Lý do")
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
-
-  new SlashCommandBuilder()
-    .setName("unmute")
-    .setDescription("Gỡ mute")
-    .addUserOption(opt =>
-      opt.setName("user").setDescription("Người cần unmute").setRequired(true)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
-].map(c => c.toJSON());
-
-/* ====== REGISTER COMMANDS ====== */
 const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
 
-async function registerCommands() {
+(async () => {
   try {
-    console.log("⏳ Đang đăng lệnh...");
+    console.log("🔁 Đang đăng slash commands...");
     await rest.put(
       Routes.applicationCommands(process.env.CLIENT_ID),
       { body: commands }
     );
     console.log("✅ Đăng lệnh thành công!");
   } catch (e) {
-    console.error(e);
+    console.error("❌ Lỗi đăng lệnh:", e);
   }
-}
+})();
 
-/* ====== BOT READY ====== */
+// ===== BOT READY =====
 client.once("ready", () => {
   console.log("🤖 Bot online:", client.user.tag);
-  registerCommands();
 });
 
-/* ====== INTERACTIONS ====== */
+// ===== INTERACTION =====
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  const { commandName } = interaction;
+  if (interaction.commandName === "help") {
+    const embed = new EmbedBuilder()
+      .setColor("#5865F2")
+      .setTitle("📜 Danh sách lệnh")
+      .setDescription(`
+**/help** → Hiển thị bảng trợ giúp
 
-  if (commandName === "ping") {
-    return interaction.reply(`🏓 Pong! ${client.ws.ping}ms`);
-  }
+━━━━━━━━━━━━━━━
+🔗 **Support server:**  
+https://discord.gg/P9yeTvwKjB
 
-  if (commandName === "say") {
-    const text = interaction.options.getString("text");
-    return interaction.reply({ content: text });
-  }
+👑 **Người làm bot:**  
+phamminhnhat__
 
-  if (commandName === "kick") {
-    const user = interaction.options.getUser("user");
-    const reason = interaction.options.getString("reason") || "No reason";
+🌐 **Website:**  
+https://pmnx.pages.dev
+      `)
+      .setFooter({ text: "Pham Minh Nhat Bot" })
+      .setTimestamp();
 
-    const member = await interaction.guild.members.fetch(user.id);
-    await member.kick(reason);
-
-    return interaction.reply(`👢 Đã kick ${user.tag}`);
-  }
-
-  if (commandName === "mute") {
-    const user = interaction.options.getUser("user");
-    const minutes = interaction.options.getInteger("minutes");
-    const reason = interaction.options.getString("reason") || "No reason";
-
-    const member = await interaction.guild.members.fetch(user.id);
-    await member.timeout(minutes * 60 * 1000, reason);
-
-    return interaction.reply(`🔇 Đã mute ${user.tag} trong ${minutes} phút`);
-  }
-
-  if (commandName === "unmute") {
-    const user = interaction.options.getUser("user");
-
-    const member = await interaction.guild.members.fetch(user.id);
-    await member.timeout(null);
-
-    return interaction.reply(`🔊 Đã unmute ${user.tag}`);
+    await interaction.reply({ embeds: [embed], ephemeral: false });
   }
 });
 
-/* ====== LOGIN ====== */
+// ===== LOGIN =====
 client.login(process.env.BOT_TOKEN);
 
+// ===== WEB =====
 app.listen(PORT, () => {
-  console.log("🌐 Web running on port", PORT);
+  console.log("🌐 Server running on port", PORT);
 });
