@@ -5,28 +5,19 @@ import {
   ActivityType,
   REST,
   Routes,
-  SlashCommandBuilder,
-  PermissionFlagsBits
+  SlashCommandBuilder
 } from "discord.js";
-import path from "path";
-import { fileURLToPath } from "url";
 
-/* ===== Setup ===== */
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(path.dirname(__filename));
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.get("/", (req, res) => {
-  res.send("Bot is running 🚀");
-});
+app.get("/", (req, res) => res.send("Bot is running 🚀"));
 
-/* ===== Discord Client ===== */
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
 
-/* ===== Status + Thought ===== */
+/* ===== STATUS ===== */
 const activities = [
   { name: "pmnx.pages.dev", type: ActivityType.Playing },
   { name: "phamminhnhat__", type: ActivityType.Watching },
@@ -34,65 +25,42 @@ const activities = [
   { name: "Pham Minh Nhat", type: ActivityType.Playing }
 ];
 
-const thoughts = [
-  "Thinking about life...",
-  "Watching the universe 🌌",
-  "Coding something cool 💻",
-  "Dreaming big ✨"
-];
+let i = 0;
 
-let activityIndex = 0;
-let thoughtIndex = 0;
-let currentActivity = activities[0];
-let currentThought = thoughts[0];
-let startTime = Date.now();
-
-/* ===== Presence Update ===== */
 function updatePresence() {
   client.user.setPresence({
     status: "online",
-    activities: [
-      currentActivity,
-      { name: currentThought, type: ActivityType.Custom }
-    ]
+    activities: [activities[i]]
   });
 }
 
-/* ===== Slash Commands ===== */
+/* ===== COMMANDS ===== */
 const commands = [
   new SlashCommandBuilder()
     .setName("say")
     .setDescription("Bot nói thay bạn")
-    .addStringOption(opt =>
-      opt.setName("text").setDescription("Nội dung").setRequired(true)
-    )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
+    .addStringOption(o =>
+      o.setName("text").setDescription("Nội dung").setRequired(true)
+    ),
 
   new SlashCommandBuilder()
     .setName("kick")
     .setDescription("Kick thành viên")
-    .addUserOption(opt =>
-      opt.setName("user").setDescription("Người bị kick").setRequired(true)
-    )
-    .setReasonable
-    .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
+    .addUserOption(o =>
+      o.setName("user").setDescription("Người bị kick").setRequired(true)
+    ),
 
   new SlashCommandBuilder()
     .setName("mute")
-    .setDescription("Mute (timeout) thành viên")
-    .addUserOption(opt =>
-      opt.setName("user").setDescription("Người bị mute").setRequired(true)
+    .setDescription("Mute thành viên")
+    .addUserOption(o =>
+      o.setName("user").setDescription("Người bị mute").setRequired(true)
     )
-    .addIntegerOption(opt =>
-      opt
-        .setName("minutes")
-        .setDescription("Số phút mute")
-        .setRequired(true)
+    .addIntegerOption(o =>
+      o.setName("minutes").setDescription("Số phút").setRequired(true)
     )
-    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
-].map(cmd => cmd.toJSON());
+].map(c => c.toJSON());
 
-/* ===== Register Commands ===== */
 const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
 
 async function registerCommands() {
@@ -100,63 +68,55 @@ async function registerCommands() {
     Routes.applicationCommands(process.env.CLIENT_ID),
     { body: commands }
   );
-  console.log("Admin commands registered");
+  console.log("Slash commands registered");
 }
 
-/* ===== Ready ===== */
+/* ===== READY ===== */
 client.once("ready", async () => {
   console.log("Bot online:", client.user.tag);
   await registerCommands();
   updatePresence();
+
+  setInterval(() => {
+    i = (i + 1) % activities.length;
+    updatePresence();
+  }, 5000);
 });
 
-/* ===== Interaction Handler ===== */
+/* ===== COMMAND HANDLER ===== */
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
   const cmd = interaction.commandName;
 
-  /* ---- SAY ---- */
   if (cmd === "say") {
     const text = interaction.options.getString("text");
-    await interaction.reply({ content: "✅ Sent!", ephemeral: true });
+    await interaction.reply({ content: "✅ Sent", ephemeral: true });
     return interaction.channel.send(text);
   }
 
-  /* ---- KICK ---- */
   if (cmd === "kick") {
+    if (!interaction.member.permissions.has("KickMembers"))
+      return interaction.reply({ content: "❌ Bạn không có quyền kick", ephemeral: true });
+
     const user = interaction.options.getUser("user");
     const member = await interaction.guild.members.fetch(user.id);
-
-    if (!member.kickable)
-      return interaction.reply({
-        content: "❌ Không thể kick người này",
-        ephemeral: true
-      });
-
     await member.kick();
-    return interaction.reply(`👢 Đã kick **${user.tag}**`);
+    return interaction.reply(`👢 Đã kick ${user.tag}`);
   }
 
-  /* ---- MUTE ---- */
   if (cmd === "mute") {
+    if (!interaction.member.permissions.has("ModerateMembers"))
+      return interaction.reply({ content: "❌ Bạn không có quyền mute", ephemeral: true });
+
     const user = interaction.options.getUser("user");
     const minutes = interaction.options.getInteger("minutes");
     const member = await interaction.guild.members.fetch(user.id);
-
-    if (!member.moderatable)
-      return interaction.reply({
-        content: "❌ Không thể mute người này",
-        ephemeral: true
-      });
-
     await member.timeout(minutes * 60 * 1000);
-    return interaction.reply(
-      `🔇 Đã mute **${user.tag}** trong ${minutes} phút`
-    );
+    return interaction.reply(`🔇 Đã mute ${user.tag} ${minutes} phút`);
   }
 });
 
-/* ===== Login + Web ===== */
+/* ===== START ===== */
 client.login(process.env.BOT_TOKEN);
-app.listen(PORT, () => console.log("Server running on port", PORT));
+app.listen(PORT, () => console.log("Web running on", PORT));
