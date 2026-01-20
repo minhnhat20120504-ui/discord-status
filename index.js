@@ -43,6 +43,10 @@ const distube = new DisTube(client, {
     new YtDlpPlugin()
   ]
 });
+distube.on("error", (channel, error) => {
+  console.error("DISTUBE ERROR:", error);
+  if (channel) channel.send("❌ Lỗi phát nhạc!");
+});
 // ================== SLASH COMMANDS ==================
 const commands = [
   new SlashCommandBuilder().setName("help").setDescription("📜 Xem danh sách lệnh"),
@@ -259,12 +263,17 @@ https://pmnx.pages.dev
   if (!vc) return interaction.reply({ content: "❌ Bạn phải vào voice trước!", ephemeral: true });
 
   await interaction.deferReply();
-  await distube.play(vc, query, {
-    textChannel: interaction.channel,
-    member: interaction.member
-  });
 
-  await interaction.editReply("🎶 Đang xử lý...");
+  try {
+    await distube.play(vc, query, {
+      member: interaction.member,
+      textChannel: interaction.channel
+    });
+    await interaction.editReply("🎶 Đang phát nhạc...");
+  } catch (err) {
+    console.error(err);
+    await interaction.editReply("❌ Lỗi khi phát nhạc!");
+  }
 }
 
   if (commandName === "pause") {
@@ -332,4 +341,5 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
