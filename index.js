@@ -41,7 +41,7 @@ const distube = new DisTube(client, {
   leaveOnStop: true,
   leaveOnEmpty: true,
   plugins: [
-    new SpotifyPlugin({ emitEventsAfterFetching: true }),
+    new SpotifyPlugin(),
     new SoundCloudPlugin(),
     new YtDlpPlugin()
   ]
