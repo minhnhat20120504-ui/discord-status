@@ -37,14 +37,12 @@ const client = new Client({
 
 // ================== MUSIC SYSTEM (FIXED) ==================
 const distube = new DisTube(client, {
-  emitNewSongOnly: true,
   plugins: [
     new SpotifyPlugin(),
     new SoundCloudPlugin(),
     new YtDlpPlugin()
   ]
 });
-
 // ================== SLASH COMMANDS ==================
 const commands = [
   new SlashCommandBuilder().setName("help").setDescription("📜 Xem danh sách lệnh"),
@@ -256,18 +254,18 @@ https://pmnx.pages.dev
 
   // ===== MUSIC =====
   if (commandName === "play") {
-    const query = interaction.options.getString("query");
-    const voiceChannel = interaction.member.voice.channel;
-    if (!voiceChannel)
-      return interaction.reply({ content: "❌ Bạn phải vào voice trước!", ephemeral: true });
+  const query = interaction.options.getString("query");
+  const vc = interaction.member.voice.channel;
+  if (!vc) return interaction.reply({ content: "❌ Bạn phải vào voice trước!", ephemeral: true });
 
-    await interaction.reply("🔎 Đang tìm nhạc...");
-    distube.play(voiceChannel, query, {
-      member: interaction.member,
-      textChannel: interaction.channel,
-      interaction
-    });
-  }
+  await interaction.deferReply();
+  await distube.play(vc, query, {
+    textChannel: interaction.channel,
+    member: interaction.member
+  });
+
+  await interaction.editReply("🎶 Đang xử lý...");
+}
 
   if (commandName === "pause") {
     const queue = distube.getQueue(interaction.guildId);
@@ -334,3 +332,4 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
