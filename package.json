@@ -1,0 +1,12 @@
+{
+  "name": "discord-render-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.2",
+    "express": "^4.19.2"
+  }
+}
