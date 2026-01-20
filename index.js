@@ -1,77 +1,148 @@
 import express from "express";
-import { Client, GatewayIntentBits, ActivityType, PermissionsBitField } from "discord.js";
+import {
+  Client,
+  GatewayIntentBits,
+  REST,
+  Routes,
+  SlashCommandBuilder,
+  PermissionFlagsBits
+} from "discord.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.get("/", (req, res) => res.send("Bot is running"));
-app.listen(PORT, () => console.log("Web alive on", PORT));
+app.get("/", (req, res) => {
+  res.send("Bot is running");
+});
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers
-  ]
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
 
-/* ===== STATUS ROTATE ===== */
-const activities = [
-  { name: "pmnx.pages.dev", type: ActivityType.Playing },
-  { name: "phamminhnhat__", type: ActivityType.Watching },
-  { name: "[ HEAVEN IS HERE ]", type: ActivityType.Listening },
-  { name: "Pham Minh Nhat", type: ActivityType.Playing }
-];
+/* ====== SLASH COMMANDS ====== */
+const commands = [
+  new SlashCommandBuilder()
+    .setName("ping")
+    .setDescription("Check bot ping"),
 
-let i = 0;
+  new SlashCommandBuilder()
+    .setName("say")
+    .setDescription("Bot nói thay bạn")
+    .addStringOption(opt =>
+      opt.setName("text").setDescription("Nội dung").setRequired(true)
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+  new SlashCommandBuilder()
+    .setName("kick")
+    .setDescription("Kick thành viên")
+    .addUserOption(opt =>
+      opt.setName("user").setDescription("Người cần kick").setRequired(true)
+    )
+    .addStringOption(opt =>
+      opt.setName("reason").setDescription("Lý do")
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.KickMembers),
+
+  new SlashCommandBuilder()
+    .setName("mute")
+    .setDescription("Mute (timeout) thành viên")
+    .addUserOption(opt =>
+      opt.setName("user").setDescription("Người cần mute").setRequired(true)
+    )
+    .addIntegerOption(opt =>
+      opt.setName("minutes").setDescription("Số phút").setRequired(true)
+    )
+    .addStringOption(opt =>
+      opt.setName("reason").setDescription("Lý do")
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
+
+  new SlashCommandBuilder()
+    .setName("unmute")
+    .setDescription("Gỡ mute")
+    .addUserOption(opt =>
+      opt.setName("user").setDescription("Người cần unmute").setRequired(true)
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers)
+].map(c => c.toJSON());
+
+/* ====== REGISTER COMMANDS ====== */
+const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
+
+async function registerCommands() {
+  try {
+    console.log("⏳ Đang đăng lệnh...");
+    await rest.put(
+      Routes.applicationCommands(process.env.CLIENT_ID),
+      { body: commands }
+    );
+    console.log("✅ Đăng lệnh thành công!");
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+/* ====== BOT READY ====== */
 client.once("ready", () => {
-  console.log("Bot online:", client.user.tag);
-
-  setInterval(() => {
-    i = (i + 1) % activities.length;
-    client.user.setPresence({
-      status: "online",
-      activities: [activities[i]]
-    });
-  }, 5000);
+  console.log("🤖 Bot online:", client.user.tag);
+  registerCommands();
 });
 
-/* ===== COMMANDS ===== */
-const PREFIX = "!";
+/* ====== INTERACTIONS ====== */
+client.on("interactionCreate", async interaction => {
+  if (!interaction.isChatInputCommand()) return;
 
-client.on("messageCreate", async msg => {
-  if (msg.author.bot || !msg.content.startsWith(PREFIX)) return;
+  const { commandName } = interaction;
 
-  const args = msg.content.slice(PREFIX.length).trim().split(/ +/);
-  const cmd = args.shift().toLowerCase();
-
-  if (cmd === "say") {
-    return msg.channel.send(args.join(" "));
+  if (commandName === "ping") {
+    return interaction.reply(`🏓 Pong! ${client.ws.ping}ms`);
   }
 
-  if (cmd === "kick") {
-    if (!msg.member.permissions.has(PermissionsBitField.Flags.KickMembers))
-      return msg.reply("❌ Bạn không có quyền kick");
-
-    const member = msg.mentions.members.first();
-    if (!member) return msg.reply("❌ Tag người cần kick");
-
-    await member.kick();
-    msg.channel.send(`✅ Đã kick ${member.user.tag}`);
+  if (commandName === "say") {
+    const text = interaction.options.getString("text");
+    return interaction.reply({ content: text });
   }
 
-  if (cmd === "mute") {
-    if (!msg.member.permissions.has(PermissionsBitField.Flags.ModerateMembers))
-      return msg.reply("❌ Bạn không có quyền mute");
+  if (commandName === "kick") {
+    const user = interaction.options.getUser("user");
+    const reason = interaction.options.getString("reason") || "No reason";
 
-    const member = msg.mentions.members.first();
-    const minutes = parseInt(args[1]);
-    if (!member || !minutes) return msg.reply("❌ Dùng: !mute @user 5");
+    const member = await interaction.guild.members.fetch(user.id);
+    await member.kick(reason);
 
-    await member.timeout(minutes * 60 * 1000);
-    msg.channel.send(`🔇 Đã mute ${member.user.tag} trong ${minutes} phút`);
+    return interaction.reply(`👢 Đã kick ${user.tag}`);
+  }
+
+  if (commandName === "mute") {
+    const user = interaction.options.getUser("user");
+    const minutes = interaction.options.getInteger("minutes");
+    const reason = interaction.options.getString("reason") || "No reason";
+
+    const member = await interaction.guild.members.fetch(user.id);
+    await member.timeout(minutes * 60 * 1000, reason);
+
+    return interaction.reply(`🔇 Đã mute ${user.tag} trong ${minutes} phút`);
+  }
+
+  if (commandName === "unmute") {
+    const user = interaction.options.getUser("user");
+
+    const member = await interaction.guild.members.fetch(user.id);
+    await member.timeout(null);
+
+    return interaction.reply(`🔊 Đã unmute ${user.tag}`);
   }
 });
 
+/* ====== LOGIN ====== */
 client.login(process.env.BOT_TOKEN);
+
+app.listen(PORT, () => {
+  console.log("🌐 Web running on port", PORT);
+});
