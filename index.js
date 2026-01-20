@@ -1,23 +1,22 @@
 import express from "express";
-import { Client, GatewayIntentBits, ActivityType, REST, Routes, PermissionsBitField } from "discord.js";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { Client, GatewayIntentBits, ActivityType, PermissionsBitField } from "discord.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.get("/", (req, res) => {
-  res.send("Bot is running");
-});
+app.get("/", (req, res) => res.send("Bot is running"));
+app.listen(PORT, () => console.log("Web alive on", PORT));
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
+  ]
 });
 
-/* ====== RPC / Activity ====== */
+/* ===== STATUS ROTATE ===== */
 const activities = [
   { name: "pmnx.pages.dev", type: ActivityType.Playing },
   { name: "phamminhnhat__", type: ActivityType.Watching },
@@ -38,99 +37,41 @@ client.once("ready", () => {
   }, 5000);
 });
 
-/* ====== SLASH COMMANDS ====== */
-const commands = [
-  {
-    name: "say",
-    description: "Bot nói thay bạn",
-    options: [
-      {
-        name: "text",
-        type: 3,
-        description: "Nội dung",
-        required: true
-      }
-    ]
-  },
-  {
-    name: "kick",
-    description: "Kick thành viên",
-    options: [
-      {
-        name: "user",
-        type: 6,
-        description: "Người cần kick",
-        required: true
-      }
-    ]
-  },
-  {
-    name: "mute",
-    description: "Mute (timeout) thành viên",
-    options: [
-      {
-        name: "user",
-        type: 6,
-        description: "Người cần mute",
-        required: true
-      },
-      {
-        name: "minutes",
-        type: 4,
-        description: "Số phút mute",
-        required: true
-      }
-    ]
-  }
-];
+/* ===== COMMANDS ===== */
+const PREFIX = "!";
 
-const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
+client.on("messageCreate", async msg => {
+  if (msg.author.bot || !msg.content.startsWith(PREFIX)) return;
 
-(async () => {
-  try {
-    console.log("Đang đăng slash commands...");
-    await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
-      { body: commands }
-    );
-    console.log("Slash commands xong!");
-  } catch (e) {
-    console.error(e);
-  }
-})();
+  const args = msg.content.slice(PREFIX.length).trim().split(/ +/);
+  const cmd = args.shift().toLowerCase();
 
-/* ====== COMMAND HANDLER ====== */
-client.on("interactionCreate", async interaction => {
-  if (!interaction.isChatInputCommand()) return;
-
-  if (interaction.commandName === "say") {
-    const text = interaction.options.getString("text");
-    await interaction.reply(text);
+  if (cmd === "say") {
+    return msg.channel.send(args.join(" "));
   }
 
-  if (interaction.commandName === "kick") {
-    if (!interaction.member.permissions.has(PermissionsBitField.Flags.KickMembers))
-      return interaction.reply({ content: "❌ Bạn không có quyền kick!", ephemeral: true });
+  if (cmd === "kick") {
+    if (!msg.member.permissions.has(PermissionsBitField.Flags.KickMembers))
+      return msg.reply("❌ Bạn không có quyền kick");
 
-    const user = interaction.options.getUser("user");
-    const member = await interaction.guild.members.fetch(user.id);
+    const member = msg.mentions.members.first();
+    if (!member) return msg.reply("❌ Tag người cần kick");
+
     await member.kick();
-    await interaction.reply(`✅ Đã kick ${user.tag}`);
+    msg.channel.send(`✅ Đã kick ${member.user.tag}`);
   }
 
-  if (interaction.commandName === "mute") {
-    if (!interaction.member.permissions.has(PermissionsBitField.Flags.ModerateMembers))
-      return interaction.reply({ content: "❌ Bạn không có quyền mute!", ephemeral: true });
+  if (cmd === "mute") {
+    if (!msg.member.permissions.has(PermissionsBitField.Flags.ModerateMembers))
+      return msg.reply("❌ Bạn không có quyền mute");
 
-    const user = interaction.options.getUser("user");
-    const minutes = interaction.options.getInteger("minutes");
-    const member = await interaction.guild.members.fetch(user.id);
+    const member = msg.mentions.members.first();
+    const minutes = parseInt(args[1]);
+    if (!member || !minutes) return msg.reply("❌ Dùng: !mute @user 5");
 
     await member.timeout(minutes * 60 * 1000);
-    await interaction.reply(`🔇 Đã mute ${user.tag} trong ${minutes} phút`);
+    msg.channel.send(`🔇 Đã mute ${member.user.tag} trong ${minutes} phút`);
   }
 });
 
 client.login(process.env.BOT_TOKEN);
-
-app.listen(PORT,
