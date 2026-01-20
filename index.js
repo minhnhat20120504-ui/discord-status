@@ -35,11 +35,9 @@ const client = new Client({
   ]
 });
 
-// ================== MUSIC SYSTEM ==================
+// ================== MUSIC SYSTEM (FIXED) ==================
 const distube = new DisTube(client, {
   emitNewSongOnly: true,
-  leaveOnStop: true,
-  leaveOnEmpty: true,
   plugins: [
     new SpotifyPlugin(),
     new SoundCloudPlugin(),
