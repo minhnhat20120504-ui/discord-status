@@ -37,20 +37,19 @@ const client = new Client({
 
 // ================== MUSIC SYSTEM (FIXED) ==================
 const distube = new DisTube(client, {
+  emitNewSongOnly: true,
+  leaveOnStop: true,
+  leaveOnEmpty: true,
   plugins: [
     new SpotifyPlugin(),
     new SoundCloudPlugin(),
     new YtDlpPlugin()
   ]
 });
-distube.on("error", (channel, error) => {
-  console.error("DISTUBE ERROR:", error);
-  if (channel) channel.send("❌ Lỗi phát nhạc!");
-});
+
 // ================== SLASH COMMANDS ==================
 const commands = [
   new SlashCommandBuilder().setName("help").setDescription("📜 Xem danh sách lệnh"),
-
   new SlashCommandBuilder().setName("ping").setDescription("🏓 Kiểm tra độ trễ bot"),
 
   new SlashCommandBuilder()
@@ -179,16 +178,6 @@ client.on("interactionCreate", async interaction => {
 **/loop** → Lặp bài / hàng đợi
 
 👤 **/userinfo** → Xem thông tin người dùng
-
-━━━━━━━━━━━━━━━
-🔗 Support server:
-https://discord.gg/P9yeTvwKjB
-
-👑 Người làm bot:
-phamminhnhat__
-
-🌐 Website:
-https://pmnx.pages.dev
       `)
       .setFooter({ text: "Pham Minh Nhat Bot" })
       .setTimestamp();
@@ -247,8 +236,8 @@ https://pmnx.pages.dev
       .addFields(
         { name: "Tên", value: user.tag, inline: true },
         { name: "ID", value: user.id, inline: true },
-        { name: "Ngày tạo tài khoản", value: `<t:${Math.floor(user.createdTimestamp / 1000)}:R>`, inline: false },
-        { name: "Ngày vào server", value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>`, inline: false }
+        { name: "Ngày tạo tài khoản", value: `<t:${Math.floor(user.createdTimestamp / 1000)}:R>` },
+        { name: "Ngày vào server", value: `<t:${Math.floor(member.joinedTimestamp / 1000)}:R>` }
       )
       .setFooter({ text: "Pham Minh Nhat Bot" })
       .setTimestamp();
@@ -258,23 +247,23 @@ https://pmnx.pages.dev
 
   // ===== MUSIC =====
   if (commandName === "play") {
-  const query = interaction.options.getString("query");
-  const vc = interaction.member.voice.channel;
-  if (!vc) return interaction.reply({ content: "❌ Bạn phải vào voice trước!", ephemeral: true });
+    const query = interaction.options.getString("query");
+    const vc = interaction.member.voice.channel;
+    if (!vc) return interaction.reply({ content: "❌ Bạn phải vào voice trước!", ephemeral: true });
 
-  await interaction.deferReply();
+    await interaction.deferReply();
 
-  try {
-    await distube.play(vc, query, {
-      member: interaction.member,
-      textChannel: interaction.channel
-    });
-    await interaction.editReply("🎶 Đang phát nhạc...");
-  } catch (err) {
-    console.error(err);
-    await interaction.editReply("❌ Lỗi khi phát nhạc!");
+    try {
+      await distube.play(vc, query, {
+        member: interaction.member,
+        textChannel: interaction.channel
+      });
+      await interaction.editReply("🎶 Đang phát nhạc...");
+    } catch (err) {
+      console.error(err);
+      await interaction.editReply("❌ Không phát được nhạc!");
+    }
   }
-}
 
   if (commandName === "pause") {
     const queue = distube.getQueue(interaction.guildId);
@@ -314,7 +303,6 @@ https://pmnx.pages.dev
     if (mode === "queue") loopMode = 2;
 
     queue.setRepeatMode(loopMode);
-
     const modeText = loopMode === 0 ? "Tắt" : loopMode === 1 ? "Lặp bài" : "Lặp hàng đợi";
     return interaction.reply(`🔁 Loop: **${modeText}**`);
   }
@@ -330,7 +318,7 @@ distube.on("addSong", (queue, song) => {
 });
 
 distube.on("error", (channel, error) => {
-  console.error(error);
+  console.error("DISTUBE ERROR:", error);
   if (channel) channel.send("❌ Có lỗi khi phát nhạc!");
 });
 
@@ -341,5 +329,3 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
-
-
