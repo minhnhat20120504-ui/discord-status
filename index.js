@@ -163,7 +163,7 @@ client.on("interactionCreate", async interaction => {
 **/ban** → Ban
 **/clear** → Xoá chat
 
-🎵 **Nhạc** ``Đang sửa lỗi``
+🎵 **Nhạc/Lỗi**
 **/play** → Phát nhạc
 **/pause**
 **/resume**
@@ -324,4 +324,5 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
