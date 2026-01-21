@@ -37,15 +37,19 @@ const client = new Client({
 
 // ================== MUSIC SYSTEM (FIXED) ==================
 const distube = new DisTube(client, {
-  emitNewSongOnly: true,
-  leaveOnStop: true,
+  emitNewSongOnly: false,
+  leaveOnStop: false,
   leaveOnEmpty: true,
+  leaveOnFinish: false,
   plugins: [
-    new SpotifyPlugin(),
+    new SpotifyPlugin({
+      emitEventsAfterFetching: true
+    }),
     new SoundCloudPlugin(),
     new YtDlpPlugin()
   ]
 });
+
 
 // ================== SLASH COMMANDS ==================
 const commands = [
@@ -254,10 +258,10 @@ client.on("interactionCreate", async interaction => {
     await interaction.deferReply();
 
     try {
-      await distube.play(vc, query, {
-        member: interaction.member,
-        textChannel: interaction.channel
-      });
+     await distube.play(interaction.member.voice.channel, query, {
+  textChannel: interaction.channel,
+  member: interaction.member
+});
       await interaction.editReply("🎶 Đang phát nhạc...");
     } catch (err) {
       console.error(err);
@@ -321,6 +325,10 @@ distube.on("error", (channel, error) => {
   console.error("DISTUBE ERROR:", error);
   if (channel) channel.send("❌ Có lỗi khi phát nhạc!");
 });
+distube.on("initQueue", queue => {
+  console.log("🎧 Joined voice:", queue.voiceChannel?.name);
+});
+
 
 // ================== LOGIN ==================
 client.login(process.env.BOT_TOKEN);
@@ -329,3 +337,4 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
