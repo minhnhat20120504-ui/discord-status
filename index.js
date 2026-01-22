@@ -109,7 +109,12 @@ const commands = [
     .setDescription("👤 Thông tin user")
     .addUserOption(o =>
       o.setName("user").setDescription("Người cần xem").setRequired(false)
-    )
+    ),
+
+  // ===== NEW =====
+  new SlashCommandBuilder()
+    .setName("invitebot")
+    .setDescription("📨 Nhận link invite bot qua DM")
 ].map(cmd => cmd.toJSON());
 
 // ================== REGISTER COMMANDS ==================
@@ -170,6 +175,7 @@ client.on("interactionCreate", async interaction => {
 📊 **/serverinfo**
 🎭 **/autorole**
 👤 **/userinfo**
+📨 **/invitebot**
       `)
       .setFooter({ text: "Pham Minh Nhat Bot" })
       .setTimestamp();
@@ -273,6 +279,30 @@ client.on("interactionCreate", async interaction => {
       .setTimestamp();
 
     return interaction.reply({ embeds: [embed] });
+  }
+
+  // ===== INVITE BOT =====
+  if (commandName === "invitebot") {
+    const dmText = `
+🔗 **Invite bot:**  
+https://discord.com/oauth2/authorize?client_id=1460848885374128294&permissions=8&integration_type=0&scope=bot
+
+🌐 **Website:**  
+https://pmnx.pages.dev/
+
+🛠 **Support server:**  
+https://discord.gg/P9yeTvwKjB
+
+👑 **Người làm bot:**  
+<@1089049623265550396>
+    `;
+
+    try {
+      await interaction.user.send(dmText);
+      return interaction.reply({ content: "📨 Đã gửi thông tin bot vào DM của bạn!", ephemeral: true });
+    } catch (err) {
+      return interaction.reply({ content: "❌ Không thể gửi DM cho bạn (có thể bạn đã tắt DM).", ephemeral: true });
+    }
   }
 });
 
