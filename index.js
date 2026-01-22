@@ -10,6 +10,7 @@ import {
 } from "discord.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,18 +30,23 @@ const client = new Client({
   ]
 });
 
-// ================== CONFIG ==================
-// 👉 Điền ROLE ID bạn muốn auto cấp ở đây
-const AUTO_ROLE_ID = "1407180885224325150";
+// ================== AUTO ROLE STORAGE ==================
+const dataFile = "./autorole.json";
+if (!fs.existsSync(dataFile)) fs.writeFileSync(dataFile, "{}");
+const autoRoles = JSON.parse(fs.readFileSync(dataFile, "utf8"));
+
+function saveAutoRoles() {
+  fs.writeFileSync(dataFile, JSON.stringify(autoRoles, null, 2));
+}
 
 // ================== SLASH COMMANDS ==================
 const commands = [
   new SlashCommandBuilder().setName("help").setDescription("📜 Danh sách lệnh"),
-  new SlashCommandBuilder().setName("ping").setDescription("🏓 Kiểm tra ping bot"),
+  new SlashCommandBuilder().setName("ping").setDescription("🏓 Ping bot"),
 
   new SlashCommandBuilder()
     .setName("say")
-    .setDescription("💬 Bot nói thay bạn")
+    .setDescription("💬 Bot nói")
     .addStringOption(o =>
       o.setName("message").setDescription("Nội dung").setRequired(true)
     ),
@@ -74,7 +80,7 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName("clear")
-    .setDescription("🧹 Xoá nhiều tin nhắn")
+    .setDescription("🧹 Xoá chat")
     .addIntegerOption(o =>
       o.setName("amount").setDescription("1-100").setRequired(true)
     )
@@ -84,6 +90,22 @@ const commands = [
   new SlashCommandBuilder()
     .setName("serverinfo")
     .setDescription("📊 Thông tin server"),
+
+  new SlashCommandBuilder()
+    .setName("autorole")
+    .setDescription("🎭 Tự động cấp role cho member mới")
+    .addRoleOption(o =>
+      o.setName("role").setDescription("Role muốn auto cấp").setRequired(false)
+    )
+    .addStringOption(o =>
+      o.setName("mode")
+        .setDescription("Bật hoặc tắt")
+        .setRequired(false)
+        .addChoices(
+          { name: "off", value: "off" }
+        )
+    )
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
 
   new SlashCommandBuilder()
     .setName("userinfo")
@@ -114,13 +136,14 @@ client.once("ready", () => {
   console.log("🤖 Bot online:", client.user.tag);
 });
 
-// ================== AUTO ROLE ==================
+// ================== AUTO ROLE EVENT ==================
 client.on("guildMemberAdd", async member => {
+  const roleId = autoRoles[member.guild.id];
+  if (!roleId) return;
+
   try {
-    const role = member.guild.roles.cache.get(AUTO_ROLE_ID);
-    if (!role) return;
-    await member.roles.add(role);
-    console.log(`✅ Đã cấp role cho ${member.user.tag}`);
+    const role = member.guild.roles.cache.get(roleId);
+    if (role) await member.roles.add(role);
   } catch (err) {
     console.error("❌ Lỗi auto role:", err);
   }
@@ -136,15 +159,16 @@ client.on("interactionCreate", async interaction => {
       .setColor("#5865F2")
       .setTitle("📜 Danh sách lệnh")
       .setDescription(`
-**/help** → Danh sách lệnh
-**/ping** → Ping bot
-**/say** → Bot nói
-**/kick** → Kick
-**/mute** → Mute
-**/ban** → Ban
-**/clear** → Xoá chat
+**/help**
+**/ping**
+**/say**
+**/kick**
+**/mute**
+**/ban**
+**/clear**
 
 📊 **/serverinfo**
+🎭 **/autorole**
 👤 **/userinfo**
       `)
       .setFooter({ text: "Pham Minh Nhat Bot" })
@@ -197,20 +221,40 @@ client.on("interactionCreate", async interaction => {
   if (commandName === "serverinfo") {
     const guild = interaction.guild;
     const members = await guild.members.fetch();
-    const humanCount = members.filter(m => !m.user.bot).size;
+    const humans = members.filter(m => !m.user.bot).size;
 
     const embed = new EmbedBuilder()
       .setColor("#00FFAA")
-      .setTitle(`📊 Thông tin server: ${guild.name}`)
+      .setTitle(`📊 ${guild.name}`)
       .setThumbnail(guild.iconURL({ dynamic: true }))
       .addFields(
         { name: "📅 Ngày tạo", value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:F>` },
-        { name: "👥 Thành viên (không bot)", value: `${humanCount}` }
+        { name: "👥 Thành viên (không bot)", value: `${humans}` }
       )
       .setFooter({ text: "Pham Minh Nhat Bot" })
       .setTimestamp();
 
     return interaction.reply({ embeds: [embed] });
+  }
+
+  // ===== AUTOROLE =====
+  if (commandName === "autorole") {
+    const role = interaction.options.getRole("role");
+    const mode = interaction.options.getString("mode");
+    const guildId = interaction.guild.id;
+
+    if (mode === "off") {
+      delete autoRoles[guildId];
+      saveAutoRoles();
+      return interaction.reply("❌ Đã tắt auto role cho server này.");
+    }
+
+    if (!role)
+      return interaction.reply({ content: "❌ Dùng: `/autorole @role` hoặc `/autorole off`", ephemeral: true });
+
+    autoRoles[guildId] = role.id;
+    saveAutoRoles();
+    return interaction.reply(`✅ Auto role đã set thành: **${role.name}**`);
   }
 
   // ===== USER INFO =====
