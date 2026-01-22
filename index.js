@@ -86,7 +86,6 @@ const commands = [
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
-  // ===== NEW =====
   new SlashCommandBuilder()
     .setName("serverinfo")
     .setDescription("📊 Thông tin server"),
@@ -99,11 +98,9 @@ const commands = [
     )
     .addStringOption(o =>
       o.setName("mode")
-        .setDescription("Bật hoặc tắt")
+        .setDescription("Tắt auto role")
         .setRequired(false)
-        .addChoices(
-          { name: "off", value: "off" }
-        )
+        .addChoices({ name: "off", value: "off" })
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles),
 
@@ -120,12 +117,15 @@ const rest = new REST({ version: "10" }).setToken(process.env.BOT_TOKEN);
 
 (async () => {
   try {
-    console.log("🔁 Đang đăng slash commands...");
-    await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
-      { body: commands }
-    );
-    console.log("✅ Đăng lệnh thành công!");
+    console.log("🧹 Đang xoá lệnh cũ...");
+    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: [] });
+
+    console.log("📤 Đang đăng slash commands mới...");
+    await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), {
+      body: commands
+    });
+
+    console.log("✅ Slash commands đã đăng xong!");
   } catch (e) {
     console.error("❌ Lỗi đăng lệnh:", e);
   }
@@ -217,7 +217,6 @@ client.on("interactionCreate", async interaction => {
     return interaction.reply({ content: `🧹 Đã xoá ${amount} tin nhắn`, ephemeral: true });
   }
 
-  // ===== SERVER INFO =====
   if (commandName === "serverinfo") {
     const guild = interaction.guild;
     const members = await guild.members.fetch();
@@ -237,7 +236,6 @@ client.on("interactionCreate", async interaction => {
     return interaction.reply({ embeds: [embed] });
   }
 
-  // ===== AUTOROLE =====
   if (commandName === "autorole") {
     const role = interaction.options.getRole("role");
     const mode = interaction.options.getString("mode");
@@ -257,7 +255,6 @@ client.on("interactionCreate", async interaction => {
     return interaction.reply(`✅ Auto role đã set thành: **${role.name}**`);
   }
 
-  // ===== USER INFO =====
   if (commandName === "userinfo") {
     const user = interaction.options.getUser("user") || interaction.user;
     const member = await interaction.guild.members.fetch(user.id);
