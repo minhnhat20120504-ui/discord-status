@@ -11,11 +11,6 @@ import {
 import path from "path";
 import { fileURLToPath } from "url";
 
-import { DisTube } from "distube";
-import { SpotifyPlugin } from "@distube/spotify";
-import { SoundCloudPlugin } from "@distube/soundcloud";
-import { YtDlpPlugin } from "@distube/yt-dlp";
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -30,29 +25,24 @@ app.get("/", (req, res) => {
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.GuildMembers
   ]
 });
 
-// ================== MUSIC SYSTEM (✅ FIXED) ==================
-const distube = new DisTube(client, {
-  plugins: [
-    new SpotifyPlugin(),
-    new SoundCloudPlugin(),
-    new YtDlpPlugin()
-  ]
-});
+// ================== CONFIG ==================
+// 👉 Điền ROLE ID bạn muốn auto cấp ở đây
+const AUTO_ROLE_ID = "1407180885224325150";
 
 // ================== SLASH COMMANDS ==================
 const commands = [
-  new SlashCommandBuilder().setName("help").setDescription("📜 Xem danh sách lệnh"),
-  new SlashCommandBuilder().setName("ping").setDescription("🏓 Kiểm tra độ trễ bot"),
+  new SlashCommandBuilder().setName("help").setDescription("📜 Danh sách lệnh"),
+  new SlashCommandBuilder().setName("ping").setDescription("🏓 Kiểm tra ping bot"),
 
   new SlashCommandBuilder()
     .setName("say")
     .setDescription("💬 Bot nói thay bạn")
     .addStringOption(o =>
-      o.setName("message").setDescription("Nội dung cần bot nói").setRequired(true)
+      o.setName("message").setDescription("Nội dung").setRequired(true)
     ),
 
   new SlashCommandBuilder()
@@ -65,12 +55,12 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName("mute")
-    .setDescription("🔇 Mute (timeout) thành viên")
+    .setDescription("🔇 Timeout thành viên")
     .addUserOption(o =>
       o.setName("user").setDescription("Người cần mute").setRequired(true)
     )
     .addIntegerOption(o =>
-      o.setName("minutes").setDescription("Số phút mute").setRequired(true)
+      o.setName("minutes").setDescription("Số phút").setRequired(true)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ModerateMembers),
 
@@ -86,35 +76,14 @@ const commands = [
     .setName("clear")
     .setDescription("🧹 Xoá nhiều tin nhắn")
     .addIntegerOption(o =>
-      o.setName("amount").setDescription("Số tin nhắn cần xoá (1-100)").setRequired(true)
+      o.setName("amount").setDescription("1-100").setRequired(true)
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.ManageMessages),
 
-  // ===== MUSIC =====
+  // ===== NEW =====
   new SlashCommandBuilder()
-    .setName("play")
-    .setDescription("🎵 Phát nhạc")
-    .addStringOption(o =>
-      o.setName("query").setDescription("Tên bài hoặc link").setRequired(true)
-    ),
-
-  new SlashCommandBuilder().setName("pause").setDescription("⏸️ Tạm dừng"),
-  new SlashCommandBuilder().setName("resume").setDescription("▶️ Tiếp tục"),
-  new SlashCommandBuilder().setName("skip").setDescription("⏭️ Bỏ qua"),
-  new SlashCommandBuilder().setName("stop").setDescription("⏹️ Dừng"),
-  new SlashCommandBuilder()
-    .setName("loop")
-    .setDescription("🔁 Lặp")
-    .addStringOption(o =>
-      o.setName("mode")
-        .setDescription("Chế độ")
-        .setRequired(true)
-        .addChoices(
-          { name: "Tắt", value: "off" },
-          { name: "Lặp bài", value: "song" },
-          { name: "Lặp hàng đợi", value: "queue" }
-        )
-    ),
+    .setName("serverinfo")
+    .setDescription("📊 Thông tin server"),
 
   new SlashCommandBuilder()
     .setName("userinfo")
@@ -145,6 +114,18 @@ client.once("ready", () => {
   console.log("🤖 Bot online:", client.user.tag);
 });
 
+// ================== AUTO ROLE ==================
+client.on("guildMemberAdd", async member => {
+  try {
+    const role = member.guild.roles.cache.get(AUTO_ROLE_ID);
+    if (!role) return;
+    await member.roles.add(role);
+    console.log(`✅ Đã cấp role cho ${member.user.tag}`);
+  } catch (err) {
+    console.error("❌ Lỗi auto role:", err);
+  }
+});
+
 // ================== INTERACTIONS ==================
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
@@ -157,20 +138,13 @@ client.on("interactionCreate", async interaction => {
       .setDescription(`
 **/help** → Danh sách lệnh
 **/ping** → Ping bot
-**/say** → Bot nói thay bạn
+**/say** → Bot nói
 **/kick** → Kick
 **/mute** → Mute
 **/ban** → Ban
 **/clear** → Xoá chat
 
-🎵 **Nhạc/Lỗi**
-**/play** → Phát nhạc
-**/pause**
-**/resume**
-**/skip**
-**/stop**
-**/loop**
-
+📊 **/serverinfo**
 👤 **/userinfo**
       `)
       .setFooter({ text: "Pham Minh Nhat Bot" })
@@ -219,6 +193,27 @@ client.on("interactionCreate", async interaction => {
     return interaction.reply({ content: `🧹 Đã xoá ${amount} tin nhắn`, ephemeral: true });
   }
 
+  // ===== SERVER INFO =====
+  if (commandName === "serverinfo") {
+    const guild = interaction.guild;
+    const members = await guild.members.fetch();
+    const humanCount = members.filter(m => !m.user.bot).size;
+
+    const embed = new EmbedBuilder()
+      .setColor("#00FFAA")
+      .setTitle(`📊 Thông tin server: ${guild.name}`)
+      .setThumbnail(guild.iconURL({ dynamic: true }))
+      .addFields(
+        { name: "📅 Ngày tạo", value: `<t:${Math.floor(guild.createdTimestamp / 1000)}:F>` },
+        { name: "👥 Thành viên (không bot)", value: `${humanCount}` }
+      )
+      .setFooter({ text: "Pham Minh Nhat Bot" })
+      .setTimestamp();
+
+    return interaction.reply({ embeds: [embed] });
+  }
+
+  // ===== USER INFO =====
   if (commandName === "userinfo") {
     const user = interaction.options.getUser("user") || interaction.user;
     const member = await interaction.guild.members.fetch(user.id);
@@ -238,83 +233,6 @@ client.on("interactionCreate", async interaction => {
 
     return interaction.reply({ embeds: [embed] });
   }
-
-  // ===== MUSIC =====
-  if (commandName === "play") {
-    const query = interaction.options.getString("query");
-    const vc = interaction.member.voice.channel;
-    if (!vc)
-      return interaction.reply({ content: "❌ Bạn phải vào voice trước!", ephemeral: true });
-
-    await interaction.deferReply();
-
-    try {
-      await distube.play(vc, query, {
-        member: interaction.member,
-        textChannel: interaction.channel
-      });
-      await interaction.editReply("🎶 Đang phát nhạc...");
-    } catch (err) {
-      console.error(err);
-      await interaction.editReply("❌ Không phát được nhạc!");
-    }
-  }
-
-  if (commandName === "pause") {
-    const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply("❌ Không có nhạc!");
-    queue.pause();
-    return interaction.reply("⏸️ Đã tạm dừng");
-  }
-
-  if (commandName === "resume") {
-    const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply("❌ Không có nhạc!");
-    queue.resume();
-    return interaction.reply("▶️ Tiếp tục phát");
-  }
-
-  if (commandName === "skip") {
-    const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply("❌ Không có nhạc!");
-    await queue.skip();
-    return interaction.reply("⏭️ Đã bỏ qua");
-  }
-
-  if (commandName === "stop") {
-    const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply("❌ Không có nhạc!");
-    queue.stop();
-    return interaction.reply("⏹️ Đã dừng nhạc");
-  }
-
-  if (commandName === "loop") {
-    const mode = interaction.options.getString("mode");
-    const queue = distube.getQueue(interaction.guildId);
-    if (!queue) return interaction.reply("❌ Không có nhạc!");
-
-    let loopMode = 0;
-    if (mode === "song") loopMode = 1;
-    if (mode === "queue") loopMode = 2;
-
-    queue.setRepeatMode(loopMode);
-    const modeText = loopMode === 0 ? "Tắt" : loopMode === 1 ? "Lặp bài" : "Lặp hàng đợi";
-    return interaction.reply(`🔁 Loop: **${modeText}**`);
-  }
-});
-
-// ================== MUSIC EVENTS ==================
-distube.on("playSong", (queue, song) => {
-  queue.textChannel.send(`🎶 Đang phát: **${song.name}** (${song.formattedDuration})`);
-});
-
-distube.on("addSong", (queue, song) => {
-  queue.textChannel.send(`➕ Đã thêm: **${song.name}**`);
-});
-
-distube.on("error", (channel, error) => {
-  console.error("DISTUBE ERROR:", error);
-  if (channel) channel.send("❌ Có lỗi khi phát nhạc!");
 });
 
 // ================== LOGIN ==================
@@ -324,5 +242,3 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
-
-
