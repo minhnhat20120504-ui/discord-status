@@ -22,6 +22,9 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// ================== CONFIG ==================
+const LOG_CHANNEL_ID = "DAN_ID_KENH_LOG_O_DAY"; // 👈 đổi thành ID kênh log của bạn
+
 // ================== DISCORD BOT ==================
 const client = new Client({
   intents: [
@@ -111,7 +114,6 @@ const commands = [
       o.setName("user").setDescription("Người cần xem").setRequired(false)
     ),
 
-  // ===== NEW =====
   new SlashCommandBuilder()
     .setName("invitebot")
     .setDescription("📨 Nhận link invite bot qua DM")
@@ -154,9 +156,36 @@ client.on("guildMemberAdd", async member => {
   }
 });
 
+// ================== LOG FUNCTION ==================
+async function logCommand(interaction) {
+  try {
+    const logChannel = await client.channels.fetch(LOG_CHANNEL_ID);
+    if (!logChannel) return;
+
+    const embed = new EmbedBuilder()
+      .setColor("#ffaa00")
+      .setTitle("📥 Bot Command Log")
+      .addFields(
+        { name: "👤 User", value: `${interaction.user.tag} (${interaction.user.id})` },
+        { name: "📌 Lệnh", value: `/${interaction.commandName}` },
+        { name: "🏠 Server", value: `${interaction.guild.name}` },
+        { name: "💬 Channel", value: `<#${interaction.channelId}>` }
+      )
+      .setTimestamp();
+
+    logChannel.send({ embeds: [embed] });
+  } catch (err) {
+    console.error("❌ Lỗi gửi log:", err);
+  }
+}
+
 // ================== INTERACTIONS ==================
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
+
+  // ✅ LOG TRƯỚC
+  logCommand(interaction);
+
   const { commandName } = interaction;
 
   if (commandName === "help") {
@@ -281,7 +310,6 @@ client.on("interactionCreate", async interaction => {
     return interaction.reply({ embeds: [embed] });
   }
 
-  // ===== INVITE BOT =====
   if (commandName === "invitebot") {
     const dmText = `
 🔗 **Invite bot:**  
