@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
 });
 
 // ================== CONFIG ==================
-const LOG_CHANNEL_ID = "DAN_ID_KENH_LOG_O_DAY"; // 👈 đổi thành ID kênh log của bạn
+const LOG_CHANNEL_ID = "1465209612142645299"; // 👈 đổi thành ID kênh log của bạn
 
 // ================== DISCORD BOT ==================
 const client = new Client({
@@ -341,3 +341,4 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
