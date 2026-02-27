@@ -115,7 +115,7 @@ const commands = [
     ),
 
   new SlashCommandBuilder()
-    .setName("invitebot")
+    .setName("laybotnuke")
     .setDescription("📨 Nhận link invite bot qua DM")
 ].map(cmd => cmd.toJSON());
 
@@ -204,7 +204,7 @@ client.on("interactionCreate", async interaction => {
 📊 **/serverinfo**
 🎭 **/autorole**
 👤 **/userinfo**
-📨 **/invitebot**
+📨 **/laybotnuke**
       `)
       .setFooter({ text: "Pham Minh Nhat Bot" })
       .setTimestamp();
@@ -310,9 +310,9 @@ client.on("interactionCreate", async interaction => {
     return interaction.reply({ embeds: [embed] });
   }
 
-  if (commandName === "invitebot") {
+  if (commandName === "laybotnuke") {
     const dmText = `
-🔗 **Invite bot**  
+🔗 **Iku ikU N. bot**  
 https://discord.com/oauth2/authorize?client_id=1460848885374128294&permissions=8&integration_type=0&scope=bot
 
 🌐 **Website**  
@@ -320,7 +320,7 @@ https://pmnx.pages.dev/
 
 🛠 **Support server**  
 https://discord.gg/P9yeTvwKjB
-🛠 **Bot Nuke server/AntiNUkE**  
+🛠 **Bot Nuke/Bot AntiNUkE**  
 https://discord.gg/GxHM24Fk4G
 👑 **Owner**  
 <@1089049623265550396>
@@ -342,5 +342,6 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
