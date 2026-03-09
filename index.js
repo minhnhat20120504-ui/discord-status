@@ -316,11 +316,8 @@ client.on("interactionCreate", async interaction => {
 https://discord.com/oauth2/authorize?client_id=1460848885374128294&permissions=8&integration_type=0&scope=bot
 
 🌐 **Website**  
-https://pmnx.pages.dev/
-
-🛠 **Support server**  
-https://discord.gg/P9yeTvwKjB
-🛠 **Bot Nuke/Bot AntiNUkE**  
+https://pmnx.pages.dev/ 
+🛠 **Get Nuke Bot**  
 https://discord.gg/GxHM24Fk4G
 👑 **Owner**  
 <@1089049623265550396>
@@ -342,6 +339,7 @@ client.login(process.env.BOT_TOKEN);
 app.listen(PORT, () => {
   console.log("🌐 Server running on port", PORT);
 });
+
 
 
 
